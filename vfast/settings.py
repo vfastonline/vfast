@@ -95,6 +95,9 @@ if config.get('db', 'engine') == 'mysql':
             'PASSWORD': DB_PASSWORD,
             'HOST': DB_HOST,
             'PORT': DB_PORT,
+            'OPTIONS': {
+                'init_command': "SET sql_mode='STRICT_TRANS_TABLES'"
+            }
         }
     }
 elif config.get('db', 'engine') == 'sqlite':
