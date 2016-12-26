@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>detail_section</title>
+</head>
+<body>
+    <h2 style="color: red">{{ section.name }}</h2>
+    {% for course in courses %}
+        <a href="/media/{{ course.videolocal }}">{{ course.coursename }}</a><br>
+    {% endfor %}
+
+</body>
+</html>

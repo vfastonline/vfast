@@ -3,4 +3,4 @@
 .DS_Store
 db.sqlite3
 *.swp
-migrations/*
+media

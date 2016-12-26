@@ -1,14 +1,15 @@
 # encoding: utf8
 import hashlib
 from django.shortcuts import redirect, HttpResponseRedirect
+from django.http import HttpResponse
 from django.core.urlresolvers import reverse
 import logging, logging.handlers
 import time, os, json
 from settings import *
 
 
-def encry_password(username, password, salt='salt'):
-    string = username+password+salt
+def encry_password(password, salt='salt'):
+    string = password+salt
     return hashlib.new('md5',string).hexdigest()
 
 
@@ -24,15 +25,24 @@ def auth_login(func):
     return wrapper
 
 
-def require_role(user='user'):
+def require_role(role='1'):
     def _deco(func):
         def __deco(request, *args, **kwargs):
             request.session['pre_url'] = request.path
-            if user != request.session['username']:
-                return HttpResponseRedirect(json.dumps({'errmsg': '权限不够'}))
+            if role != request.session['role']:
+                return HttpResponse(json.dumps({'errmsg': '权限不够'},ensure_ascii=False))
             return func(request, *args, **kwargs)
         return __deco
     return _deco
+
+
+def auth_login(func):
+    def inner(request, *args, **kwargs):
+        role = request.session.get('role', None)
+        if not role:
+            return redirect('/login/')
+        return func(request, *args, **kwargs)
+    return inner
 
 
 class ConcurrentDayRotatingFileHandler(logging.handlers.BaseRotatingHandler):
@@ -94,7 +104,3 @@ def set_logging(log_path, log_level='error'):
 def write_log(user, msg):
     logging.getLogger('record').debug('%s %s %s' % (int(time.time()), user, msg))
 
-
-
-
-set_logging(logpath, config.get('log', 'log_level'))

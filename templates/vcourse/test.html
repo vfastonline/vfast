@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Test</title>
+</head>
+<body>
+    <h2 style="color: red;">path</h2>
+    {% for foo in paths %}
+        PATH:{{ foo.name}} &nbsp;&nbsp; <br>
+        描述:{{ foo.description }}<br>
+        详情:<a href="/vcourse/path?id={{ foo.id }}">PATH课程系列</a><br>
+    {% endfor %}
+    <h2 style="color: red">section</h2>
+    {% for foo in section %}
+            {{ foo }}<br>
+    {% endfor %}
+
+    <h2 style="color: red">course</h2>
+    {% for course in courses %}
+        {{ course.coursename }}&nbsp;&nbsp;<a href="/media/{{ course.videolocal }}">视频地址</a><br>
+    {% endfor %}
+</body>
+</html>

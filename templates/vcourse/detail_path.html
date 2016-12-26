@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Path detail</title>
+</head>
+<body>
+    <h2 style="color: red">{{ path.name }}</h2>
+    {% for section in sections %}
+        <a href="/vcourse/section?id={{ section.id }}"> {{ section.name }}</a> <br>
+    {%  endfor %}
+</body>
+</html>

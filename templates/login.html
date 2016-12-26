@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Login</title>
+</head>
+<body>
+    <form action="{% url 'login' %}"  method="post">
+        email : <input type="text" name="email"><br>
+        password: <input type="password" name="password"><br>
+        <input type="submit" value="submit">
+    </form>
+    <br>
+    <a href="/vuser/resetpwd">忘记密码</a>
+
+</body>
+</html>
