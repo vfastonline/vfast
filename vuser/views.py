@@ -1,14 +1,15 @@
 #!encoding: utf-8
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from vfast.api import *
 from django.http import HttpResponse
 import models
 import traceback, time, json
-from django.core.mail import send_mail
 from django.conf import settings
+from userapi import auth_login, require_role
+from django.db.models import F
+
 
 # Create your views here.
-
 def user_login(request):
     try:
         if request.method == 'POST':
@@ -22,7 +23,10 @@ def user_login(request):
                 return HttpResponse(json.dumps({'code':2, 'msg': '密码错误'}, ensure_ascii=False))
             else:
                 request.session['role'] = user.role
+                request.session['email'] = user.email
                 print user.role, request.session.get('role')
+                token = get_validate(user.email, user.id, user.role, settings.SECRET_KEY)
+                request.session['token'] = token
                 return HttpResponse(json.dumps({'code':0, 'msg': '登陆成功'}, ensure_ascii=False))
         else:
             return render(request, 'login.html')
@@ -31,13 +35,23 @@ def user_login(request):
        return HttpResponse(json.dumps({'code':1 , 'msg': '账号不存在'}, ensure_ascii=False))
 
 
+@auth_login
+def user_logout(request):
+    if 'role' not in request.session:
+        return redirect('/')
+    else:
+        del request.session['role']
+        del request.session['email']
+    return  redirect('/')
+
+
 def user_register(request):
     try:
         if request.method == 'POST':
             email = request.POST.get('email', None)
             pwd = request.POST.get('password', None)
             pwdrpt = request.POST.get('pwdrpt', None)
-            print email, pwd, pwdrpt
+            # print email, pwd, pwdrpt
             if pwd != pwdrpt:
                 return HttpResponse(json.dumps({'code':3, 'msg':'密码不一致'}, ensure_ascii=False))
             user = models.User.objects.filter(email=email)
@@ -60,7 +74,7 @@ def user_register(request):
                     %s/vuser/active?token=%s
                 '''  % (email, settings.HOST, token)
                 #send_mail('subject',  'message', 'from_email', 'recipient_list', fail_silently=False ) 当fail_silently=False,邮件发送失败,抛出异常
-                # send_mail(subject, message, 'duminchao@163.com', [email,])
+                send_mail(subject, message, settings.EMAIL_HOST_USER, [email,])
                 models.User.objects.create(email=email, password=password, regtime=regtime, token=token, uuid=uid)
                 return HttpResponse(json.dumps({'code':0 , 'msg': '注册用户成功'}, ensure_ascii=False))
         else:
@@ -80,7 +94,7 @@ def user_active(request):
                     models.User.objects.filter(token=token).update(status=0)
                     return HttpResponse(json.dumps({'code':0, 'msg':u'激活成功'}, ensure_ascii=False))
             else:
-                return HttpResponse(status=403)
+                return HttpResponse(json.dumps({'code':2, 'msg': '非法的URL'}))
     except:
         logging.getLogger().error('%s' % traceback.format_exc())
         return HttpResponse(json.dumps({'code':1, 'msg': '用户激活失败'}, ensure_ascii=False))
@@ -108,7 +122,7 @@ def user_resetpwd(request):
                     return HttpResponse(json.dumps({'code': 1, 'msg': u'重置密码失败'}, ensure_ascii=False))
     except:
         logging.getLogger().error('%s' % traceback.format_exc())
-        return HttpResponse(json.dumps({'code':2, 'msg':'用户不存在'}, ensure_ascii=False))
+        return HttpResponse(json.dumps({'code':2, 'msg': u'用户不存在'}, ensure_ascii=False))
 
 
 def user_resetpwd_verify(request):
@@ -122,20 +136,24 @@ def user_resetpwd_verify(request):
             email = request.POST.get('email', None)
             print email
             if email is None:
-                return HttpResponse(status=500)
+                return HttpResponse(json.dumps({'code':2, 'msg': u'传递参数错误,需要email'}, ensure_ascii=False))
             password = request.POST.get('password', None)
             password = encry_password(password)
             models.User.objects.filter(email=email).update(password=password)
-            return HttpResponse(json.dumps({'code':0}))
+            return HttpResponse(json.dumps({'code':0, 'msg': u'重置密码成功'}, ensure_ascii=False))
     except:
         logging.getLogger().error(traceback.format_exc())
-        return HttpResponse(json.dumps({'code':1}))
+        return HttpResponse(json.dumps({'code':1, 'msg': u'重置密码失败'}))
 
-@auth_login
+
+@require_role(role=0)
 def get_user_list(request):
     try:
+        print 'get_user_list'
         users = []
-        userall = models.User.objects.all().values()
+        userall = models.User.objects.all().values('id', 'email', 'username', 'regtime', 'status', 'sumtime',
+            'sumscore', 'address', 'birthday', 'company', 'companylocal', 'exceptjob', 'exceptlevel', 'fullname', 'headimg',
+            'homepage', 'linkin', 'resume', 'stackoverflow', 'github')
         for user in userall:
             users.append(user)
         return HttpResponse(json.dumps({'code':0, 'users':users}, ensure_ascii=False))
@@ -143,18 +161,21 @@ def get_user_list(request):
         logging.getLogger().error(traceback.format_exc())
         return HttpResponse(json.dumps({'code':1}, ensure_ascii=False))
 
-
+@auth_login
 def get_user_detail(request):
     try:
         userid = request.GET.get('id', None)
         if userid:
-            userinfo = models.User.objects.filter(id=userid).values('id', 'email', 'username', 'regtime', 'status')[0]
+            userinfo = models.User.objects.filter(id=userid).values('id', 'email', 'username', 'regtime', 'status', 'sumtime',
+            'sumscore', 'address', 'birthday', 'company', 'companylocal', 'exceptjob', 'exceptlevel', 'fullname', 'headimg',
+            'homepage', 'linkin', 'resume', 'stackoverflow', 'github')[0]
         return HttpResponse(json.dumps({'code':0, 'user': userinfo}, ensure_ascii=False))
     except:
         logging.getLogger().error(traceback.format_exc())
         return HttpResponse(json.dumps({'code':1}, ensure_ascii=False))
 
 
+@auth_login
 def update_user(request):
     try:
         if request.method == 'POST':
@@ -162,14 +183,15 @@ def update_user(request):
             username = request.POST.get('username', None)
             if userid:
                 models.User.objects.filter(id=userid).update(username=username)
-                return HttpResponse(json.dumps({'code':0}))
+                return HttpResponse(json.dumps({'code':0, 'msg': u'用户更新成功'}))
         else:
-            return HttpResponse(json.dumps({'code':1}))
+            return HttpResponse(json.dumps({'code':1, 'msg': u'请求方法错误'}, ensure_ascii=False))
     except:
         logging.getLogger().error(traceback.format_exc())
-        return HttpResponse(json.dumps({'code':1}))
+        return HttpResponse(json.dumps({'code':1, 'msg': u'用户更新失败'}, ensure_ascii=False))
 
 
+@require_role(role=0)
 def delete_user(request):
     try:
         if request.method == "POST":
@@ -177,7 +199,38 @@ def delete_user(request):
         elif request.method == 'GET':
             userid = request.GET.get('id', None)
         else:
-            return HttpResponse(json.dumps({'code':1}))
+            return HttpResponse(json.dumps({'code':1, 'msg': u'参数传递错误,需要传递用户id'}))
+        models.User.objects.filter(id=userid).delete()
+        return HttpResponse(json.dumps({'code': 0, 'msg': u'删除用户成功'}))
     except:
         logging.getLogger().error(traceback.format_exc())
-        return HttpResponse(json.dumps({'code':1}, ensure_ascii=False))
+        return HttpResponse(json.dumps({'code': 1, 'msg': u'数据库操作异常'}, ensure_ascii=False))
+
+
+def user_course(request):
+    """跟踪用户学习路径, 记录用户观看了那些视频, 处理逻辑在vuser_usercourse添加一条记录, 修改用户总得分,观看总时间"""
+    try:
+        if request.method == 'POST':
+            userid = request.POST.get('userid', None)
+            courseid = request.POST.get('courseid', None)
+            sectionid = request.POST.get('sectionid', None)
+            status = request.POST.get('status', None)
+            coursetime = request.POST.get('coursetime', None)
+            print userid, courseid, sectionid, status, coursetime
+            if userid and courseid and sectionid and status and coursetime:
+                userid_id = models.User.objects.get(id=userid).id
+                courseid_id = models.Course.objects.get(id=courseid).id
+                sectionid_id = models.Section.objects.get(id=sectionid).id
+                models.UserCourse.objects.create(status=status, userid_id=userid_id, courseid_id=courseid_id,
+                                             sectionid_id=sectionid_id)
+                models.User.objects.filter(id=userid).update(sumtime=F('sumtime')+coursetime, sumscore=F('sumscore')+1)
+                return HttpResponse(json.dumps({'code': 0, 'msg': '记录用户该看视频与否成功'}, ensure_ascii=False))
+            else:
+                return HttpResponse(
+                json.dumps({'code': 1, 'msg': u'参数传递错误, userid, courseid, sectionid, status, coursetime'},
+                           ensure_ascii=False))
+        else:
+            return HttpResponse(json.dumps({'code':3, 'msg': u'请使用POST请求'}, ensure_ascii=False))
+    except:
+        logging.getLogger().error(traceback.format_exc())
+        return HttpResponse(json.dumps({'code':2, 'msg': '数据库操作异常'}, ensure_ascii=False))
