@@ -234,3 +234,14 @@ def user_course(request):
     except:
         logging.getLogger().error(traceback.format_exc())
         return HttpResponse(json.dumps({'code':2, 'msg': '数据库操作异常'}, ensure_ascii=False))
+
+
+def user_headimg(request):
+    try:
+        pass
+    except:
+        pass
+
+
+def user_resume(request):
+    pass
