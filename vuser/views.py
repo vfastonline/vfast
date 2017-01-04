@@ -5,7 +5,7 @@ from django.http import HttpResponse
 import models
 import traceback, time, json
 from django.conf import settings
-from userapi import auth_login, require_role
+from userapi import auth_login, require_role, ResumeForm, HeadimgForm
 from django.db.models import F
 
 
@@ -22,12 +22,12 @@ def user_login(request):
             elif user.password != password:
                 return HttpResponse(json.dumps({'code':2, 'msg': '密码错误'}, ensure_ascii=False))
             else:
-                request.session['role'] = user.role
-                request.session['email'] = user.email
-                print user.role, request.session.get('role')
+                # request.session['role'] = user.role
+                # request.session['email'] = user.email
+                # print user.role, request.session.get('role')
                 token = get_validate(user.email, user.id, user.role, settings.SECRET_KEY)
                 request.session['token'] = token
-                return HttpResponse(json.dumps({'code':0, 'msg': '登陆成功'}, ensure_ascii=False))
+                return HttpResponse(json.dumps({'code':0, 'msg': '登陆成功', 'token': token}, ensure_ascii=False))
         else:
             return render(request, 'login.html')
     except:
@@ -42,6 +42,7 @@ def user_logout(request):
     else:
         del request.session['role']
         del request.session['email']
+        del request.session['token']
     return  redirect('/')
 
 
@@ -143,7 +144,7 @@ def user_resetpwd_verify(request):
             return HttpResponse(json.dumps({'code':0, 'msg': u'重置密码成功'}, ensure_ascii=False))
     except:
         logging.getLogger().error(traceback.format_exc())
-        return HttpResponse(json.dumps({'code':1, 'msg': u'重置密码失败'}))
+        return HttpResponse(json.dumps({'code':1, 'msg': u'重置密码失败'}, ensure_ascii=False))
 
 
 @require_role(role=0)
@@ -161,6 +162,7 @@ def get_user_list(request):
         logging.getLogger().error(traceback.format_exc())
         return HttpResponse(json.dumps({'code':1}, ensure_ascii=False))
 
+
 @auth_login
 def get_user_detail(request):
     try:
@@ -172,7 +174,7 @@ def get_user_detail(request):
         return HttpResponse(json.dumps({'code':0, 'user': userinfo}, ensure_ascii=False))
     except:
         logging.getLogger().error(traceback.format_exc())
-        return HttpResponse(json.dumps({'code':1}, ensure_ascii=False))
+        return HttpResponse(json.dumps({'code':1, 'msg': u'服务器错误'}, ensure_ascii=False))
 
 
 @auth_login
@@ -238,10 +240,43 @@ def user_course(request):
 
 def user_headimg(request):
     try:
-        pass
+        if request.method == 'POST':
+            uh = HeadimgForm(request.POST, request.FILES)
+            print uh
+            if uh.is_valid():
+                userid = uh.cleaned_data['id']
+                headimg = uh.cleaned_data['headimg']
+
+                user = models.User.objects.get(id=userid)
+                user.headimg = headimg
+                user.save()
+                return HttpResponse(json.dumps({'code':0, 'msg':'上传图片成功'}, ensure_ascii=False))
+            else:
+                return HttpResponse(json.dumps({'code':1, 'msg': u'提交表单错误'}, ensure_ascii=False))
+        else:
+            return HttpResponse(json.dumps({'code':2, 'msg': u'非法请求'}, ensure_ascii=False))
     except:
-        pass
+        logging.getLogger().error(traceback.format_exc())
+        return HttpResponse(json.dumps({'code':3, 'msg':u'服务器错误'}, ensure_ascii=False))
 
 
 def user_resume(request):
-    pass
+    try:
+        if request.method == "POST":
+            rf = ResumeForm(request.POST, request.FILES)
+            print rf
+            if rf.is_valid():
+                userid = rf.cleaned_data['id']
+                resume = rf.cleaned_data['resume']
+
+                user = models.User.objects.get(id=userid)
+                user.resume = resume
+                user.save()
+                return HttpResponse(json.dumps({'code':0, 'msg':u'上传简历成功'}, ensure_ascii=False))
+            else:
+                return HttpResponse(json.dumps({'code':1, 'msg':u'提交表单错误'}, ensure_ascii=False))
+        else:
+            return HttpResponse(json.dumps({'code':2, 'msg': u'请使用post请求'}))
+    except:
+        logging.getLogger().error(traceback.format_exc())
+        return HttpResponse(json.dumps({'code':3, 'msg': u'服务器错误'}))

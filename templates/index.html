@@ -12,10 +12,24 @@
 <a href="/vuser/resetpassword">resetpassword verify</a><br><br>
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~<br>
 
-<a href="/vuser/getuserall">getuserall</a><br>
-<a href="/vuser/getuserinfo?id=14">getuserinfo</a><br>
+<a href="/vuser/getuserall">getuserall   admin</a><br>
+<a href="/vuser/getuserinfo?id=14">getuserinfo  authon_login</a><br>
 <a href="/vuser/updateuser">updateuser</a><br>
 <a href="/vuser/deleteuser">deleteuser</a><br>
 
 <a href=""></a><br>
 <a href=""></a><br>
+
+<form action="/vuser/upheadimg" method="post" enctype="multipart/form-data">
+    id: <input type="text" name="id"><br>
+    headimg: <input type="file" name="headimg"><br>
+    <input type="submit" value="submit">
+</form>
+
+
+<form action="/vuser/upresume" method="post" enctype="multipart/form-data">
+    id: <input type="text" name="id"><br>
+    resume <input type="file" name="resume"><br>
+    <input type="submit" value="submit">
+</form>
+

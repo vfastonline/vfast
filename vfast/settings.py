@@ -198,6 +198,7 @@ STATICFILES_DIRS = (
             )
 
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media/')
+# MEDIA_ROOT = '/tmp/media/'
 MEDIA_URL = '/media/'
 
 api.set_logging(config.get('log', 'logpath'), config.get('log', 'log_level'))

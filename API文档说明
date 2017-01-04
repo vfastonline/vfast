@@ -1,0 +1,11 @@
+后台API文档使用说明
+
+服务器全部返回json格式数据
+Example: 登录接口,  /vuser/login
+    {"msg": "登陆成功", "token": "ZHVtaW5jaGFvQHFxLmNvbXwxNDgyOTA1MDM5fDE0fDF8ZDUzNGI2YTlmN2Q1NGMwOTY2OTk2Zjk4ZDBhNTNhNmQ=", "code": 0}
+    code值为0代表成功, msg为提示信息,  token根据用户账号, 用户id, 用户权限, 登录时间戳, secret_key生成。
+    客户端在请求API服务器需要带上token的值,
+
+1, 用户概述
+
+

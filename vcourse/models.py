@@ -49,8 +49,12 @@ class Path(models.Model):
     sections = models.ManyToManyField(Section, verbose_name='职业路径包含的课程')
     sumtime = models.CharField('完成路线所需要的时间', max_length=20)
     createtime = models.IntegerField('创建时间', default=0)
+    videourl = models.CharField('路径视频介绍URL', null=True, max_length=100)
+    jobs = models.IntegerField('岗位数量', default='5000')
+    salary = models.CharField('入门起薪', default='10k起', max_length=50)
+    difficulty = models.IntegerField('路线难度', default=2)
+    pathimg = models.CharField('路线img URL', default=' ', max_length=100)
+    people = models.IntegerField('学习路径的总人数', default='2000')
 
     def __unicode__(self):
         return self.name
-
-

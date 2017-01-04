@@ -58,6 +58,24 @@ class UserCourse(models.Model):
     courseid = models.ForeignKey(Course, verbose_name='课时ID')
     sectionid = models.ForeignKey(Section, verbose_name='课程ID')
     status = models.SmallIntegerField('是否看完视频', choices=course_status)
+    coursetime = models.IntegerField('观看视频的位置')
 
     def __unicode__(self):
         return  '%s  %s'  % (self.userid.username, self.courseid.coursename)
+
+
+class Medal(models.Model):
+    name = models.CharField('勋章名称', max_length=20)
+    imgurl = models.CharField('勋章图片位置', max_length=50, null=True, default='img/a.gif')
+
+    def __unicode__(self):
+        return self.name
+
+
+class Points(models.Model):
+    userid = models.ForeignKey(User)
+    timeday = models.DateField('获得积分时间,天')
+    point = models.IntegerField('获得分数')
+
+    def __unicode__(self):
+        return self.timeday

@@ -23,6 +23,7 @@ urlpatterns = [
     url('^vcourse/', include('vcourse.urls')),
     url('^vuser/', include('vuser.urls')),
     url(r'^$', views.index, name='index'),
+    url(r'^test', views.test),
 ]
 
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

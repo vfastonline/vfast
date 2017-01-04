@@ -13,7 +13,7 @@ def get_validate(email, uid, role, fix_pwd):
 
 
 def validate(key, fix_pwd):
-    t = int(time.time())
+    # t = int(time.time())
     key = base64.b64decode(key)
     x = key.split('|')
     print x
@@ -37,7 +37,7 @@ def encry_password(password, salt='salt'):
 def require_role(role='1'):
     def _deco(func):
         def __deco(request, *args, **kwargs):
-            request.session['pre_url'] = request.path
+            # request.session['pre_url'] = request.path
             if role != request.session['role']:
                 return HttpResponse(json.dumps({'errmsg': '权限不够'}, ensure_ascii=False))
             return func(request, *args, **kwargs)
@@ -92,7 +92,7 @@ def set_logging(log_path, log_level='error'):
         os.makedirs(log_path)
     log_name = os.path.join(log_path, 'record.log')
     logger = logging.getLogger('record')
-    formatter = '%(message)s'
+    formatter = '%(asctime)s %(message)s'
     add_handler(log_name, formatter, logging.DEBUG, logger)
 
     log_name = os.path.join(log_path, 'service.log')
